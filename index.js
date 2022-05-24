@@ -20,11 +20,18 @@ async function run() {
     try {
         await client.connect();
         const productsCollection = client.db("keyBoardMania").collection("products");
+        const reviewsCollection = client.db("keyBoardMania").collection("reviews");
 
         // Get all products
         app.get("/products", async (req, res) => {
             const products = await productsCollection.find().toArray();
             res.send(products);
+        });
+
+        // Get all reviews
+        app.get("/reviews", async (req, res) => {
+            const reviews = await reviewsCollection.find().toArray();
+            res.send(reviews);
         });
     } finally {
     }
