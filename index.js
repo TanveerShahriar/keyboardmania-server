@@ -38,6 +38,7 @@ async function run() {
         const productsCollection = client.db("keyBoardMania").collection("products");
         const reviewsCollection = client.db("keyBoardMania").collection("reviews");
         const usersCollection = client.db("keyBoardMania").collection("users");
+        const ordersCollection = client.db("keyBoardMania").collection("orders");
 
         // Get all products
         app.get("/products", async (req, res) => {
@@ -71,7 +72,14 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token });
-        })
+        });
+
+        // Save orders in DB
+        app.post('/order', verifyJWT, async (req, res) => {
+            const order = req.body;
+            const result = await ordersCollection.insertOne(order);
+            res.send(result);
+        });
     } finally {
     }
 }
