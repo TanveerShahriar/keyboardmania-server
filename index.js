@@ -74,6 +74,28 @@ async function run() {
             res.send({ result, token });
         });
 
+        // Check user is admin or not
+        app.get('/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const user = await usersCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        });
+
+        // Get all orders
+        app.get('/order', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email === decodedEmail) {
+                const query = { email: email };
+                const orders = await ordersCollection.find(query).toArray();
+                return res.send(orders);
+            }
+            else {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+        })
+
         // Save orders in DB
         app.post('/order', verifyJWT, async (req, res) => {
             const order = req.body;
