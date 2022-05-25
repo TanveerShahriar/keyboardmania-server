@@ -94,6 +94,14 @@ async function run() {
             else {
                 return res.status(403).send({ message: 'forbidden access' });
             }
+        });
+
+        // Get order by id
+        app.get('/order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await ordersCollection.findOne(query);
+            res.send(order);
         })
 
         // Save orders in DB
