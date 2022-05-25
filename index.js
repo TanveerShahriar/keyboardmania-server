@@ -3,6 +3,7 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -39,6 +40,20 @@ async function run() {
         const reviewsCollection = client.db("keyBoardMania").collection("reviews");
         const usersCollection = client.db("keyBoardMania").collection("users");
         const ordersCollection = client.db("keyBoardMania").collection("orders");
+        const paymentCollection = client.db("keyBoardMania").collection("payment");
+
+        // For payment
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const order = req.body;
+            const price = order.pay;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
 
         // Get all products
         app.get("/products", async (req, res) => {
@@ -102,6 +117,22 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const order = await ordersCollection.findOne(query);
             res.send(order);
+        });
+
+        // Update after payment
+        app.patch('/order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await ordersCollection.updateOne(filter, updatedDoc);
+            res.send(updatedBooking);
         })
 
         // Save orders in DB
