@@ -100,6 +100,23 @@ async function run() {
             res.send(result);
         });
 
+        // Get all user
+        app.get('/user', verifyJWT, verifyAdmin, async (req, res) => {
+            const users = await usersCollection.find().toArray();
+            res.send(users);
+        });
+
+        // Make Admin
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
+
         // Add user in DB
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -112,6 +129,14 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token });
+        });
+
+        // Delete user
+        app.delete('/user/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result);
         });
 
         // Check user is admin or not
