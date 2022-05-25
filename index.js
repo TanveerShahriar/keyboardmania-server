@@ -42,6 +42,17 @@ async function run() {
         const ordersCollection = client.db("keyBoardMania").collection("orders");
         const paymentCollection = client.db("keyBoardMania").collection("payment");
 
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await usersCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+        }
+
         // For payment
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const order = req.body;
@@ -67,7 +78,14 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const product = await productsCollection.findOne(query);
             res.send(product);
-        })
+        });
+
+        // Add product
+        app.post('/product', verifyJWT, verifyAdmin, async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
+        });
 
         // Get all reviews
         app.get("/reviews", async (req, res) => {
