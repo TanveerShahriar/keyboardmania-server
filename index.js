@@ -75,6 +75,13 @@ async function run() {
             res.send(reviews);
         });
 
+        // Save review in DB
+        app.post('/review', verifyJWT, async (req, res) => {
+            const review = req.body;
+            const result = await reviewsCollection.insertOne(review);
+            res.send(result);
+        });
+
         // Add user in DB
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
