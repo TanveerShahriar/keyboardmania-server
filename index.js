@@ -114,6 +114,32 @@ async function run() {
             res.send(users);
         });
 
+        // Get user by email
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const product = await usersCollection.findOne(query);
+            res.send(product);
+        });
+
+        // Update user
+        app.patch('/user', verifyJWT, async (req, res) => {
+            const updatedUser = req.body;
+            const {name, education, location, phone, linkedin} = updatedUser
+            const filter = { email : updatedUser.email };
+            const updatedDoc = {
+                $set: {
+                    displayName : name,
+                    education,
+                    location,
+                    phone,
+                    linkedin
+                }
+            }
+            const updated = await usersCollection.updateOne(filter, updatedDoc);
+            res.send(updated);
+        })
+
         // Make Admin
         app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
@@ -156,7 +182,7 @@ async function run() {
         });
 
         // Get all orders
-        app.get('/allOrder', verifyJWT, verifyAdmin, async(req, res) => {
+        app.get('/allOrder', verifyJWT, verifyAdmin, async (req, res) => {
             const orders = await ordersCollection.find().toArray();
             return res.send(orders)
         })
