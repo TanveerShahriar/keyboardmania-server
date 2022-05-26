@@ -156,6 +156,12 @@ async function run() {
         });
 
         // Get all orders
+        app.get('/allOrder', verifyJWT, verifyAdmin, async(req, res) => {
+            const orders = await ordersCollection.find().toArray();
+            return res.send(orders)
+        })
+
+        // Get all orders by email
         app.get('/order', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -189,8 +195,21 @@ async function run() {
                 }
             }
             const result = await paymentCollection.insertOne(payment);
-            const updatedBooking = await ordersCollection.updateOne(filter, updatedDoc);
-            res.send(updatedBooking);
+            const updatedOrder = await ordersCollection.updateOne(filter, updatedDoc);
+            res.send(updatedOrder);
+        })
+
+        // Update after shipping
+        app.patch('/allOrder/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    ship: true
+                }
+            }
+            const updatedShipping = await ordersCollection.updateOne(filter, updatedDoc);
+            res.send(updatedShipping);
         })
 
         // Save orders in DB
